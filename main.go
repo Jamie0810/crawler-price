@@ -11,6 +11,7 @@ import (
 )
 
 type Product struct {
+	Id    int
 	Name  string
 	Price string
 }
@@ -23,29 +24,29 @@ var input []Product
 
 func main() {
 	router := mux.NewRouter().StrictSlash(true)
-	router.HandleFunc("/", getData).Methods("GET")
+	router.HandleFunc("/", getPrice).Methods("GET")
 	log.Fatal(http.ListenAndServe(":8080", router))
 }
 
-func getData(w http.ResponseWriter, r *http.Request) {
+func getPrice(w http.ResponseWriter, r *http.Request) {
 	ch := make(chan string)
-	go parseUrls("https://tw.buy.yahoo.com/search/product?p=iphone", ch)
+	go parseUrls("https://www.best-price.com/search/result/query/bed/", ch)
 	data := <-ch
 	fmt.Fprintf(w, data)
 }
 
 func parseUrls(url string, ch chan string) {
-
 	doc := fetch(url)
-	content := doc.Find("div", "class", "main").FindAll("span", "class", "BaseGridItem__itemInfo___3E5Bx")
+	content := doc.Find("ul", "class", "sc-eHgmQL").FindAll("li", "class", "sc-iAyFgw")
 
 	for i := 0; i < len(content); i += 1 {
-		prodName := content[i].Find("span", "class", "BaseGridItem__title___2HWui").Text()
-		prodPrice := content[i].Find("em", "class", "BaseGridItem__price___31jkj").Text()
-		input = append(input, Product{prodName, prodPrice})
+		id := i
+		prodName := content[i].Find("span", "class", "byHTMx").Text()
+		prodPrice := content[i].Find("span", "class", "joktCJ").Text()
+		input = append(input, Product{id, prodName, prodPrice})
 	}
-	jsonData, _ := json.Marshal(&myJSON{input})
 
+	jsonData, _ := json.Marshal(&myJSON{input})
 	ch <- string(jsonData)
 }
 
