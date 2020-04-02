@@ -11,7 +11,6 @@ import (
 )
 
 type Product struct {
-	Id    int
 	Name  string
 	Price string
 }
@@ -24,11 +23,11 @@ var input []Product
 
 func main() {
 	router := mux.NewRouter().StrictSlash(true)
-	router.HandleFunc("/", getPrice).Methods("GET")
+	router.HandleFunc("/", getItems).Methods("GET")
 	log.Fatal(http.ListenAndServe(":8080", router))
 }
 
-func getPrice(w http.ResponseWriter, r *http.Request) {
+func getItems(w http.ResponseWriter, r *http.Request) {
 	ch := make(chan string)
 	go parseUrls("https://www.best-price.com/search/result/query/bed/", ch)
 	data := <-ch
@@ -40,10 +39,9 @@ func parseUrls(url string, ch chan string) {
 	content := doc.Find("ul", "class", "sc-eHgmQL").FindAll("li", "class", "sc-iAyFgw")
 
 	for i := 0; i < len(content); i += 1 {
-		id := i
-		prodName := content[i].Find("span", "class", "byHTMx").Text()
-		prodPrice := content[i].Find("span", "class", "joktCJ").Text()
-		input = append(input, Product{id, prodName, prodPrice})
+		input = append(input, Product{
+			content[i].Find("span", "class", "byHTMx").Text(),
+			content[i].Find("span", "class", "joktCJ").Text()})
 	}
 
 	jsonData, _ := json.Marshal(&myJSON{input})
